@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenInterface}};
 
 use crate::{error::*, state::*};
 
@@ -36,6 +36,16 @@ pub fn create_transaction(ctx: Context<CreateTx>, seed: u64, amount:u64) -> Resu
     require!( !ctx.accounts.vault_tx.is_initialise, MultiSigError::TransactionExists);
 
     let signer = ctx.accounts.signer.key();
+    let signers_iter = ctx.accounts.vault.signers.iter();
+
+    let mut is_signer = false;
+
+    for account in signers_iter { 
+        if *account == signer { 
+            is_signer = true
+        }
+    }
+    require!(is_signer, MultiSigError::UnauthorisedAccount);
     let transaction_state = &mut ctx.accounts.vault_tx;
 
     transaction_state.signers.push(signer);
